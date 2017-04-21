@@ -5,6 +5,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -15,9 +16,13 @@ import javafx.stage.Stage;
 public class Main extends Application {
     int scale;
     boolean ctrlPressed = false;
+    char[] key = new char[26];
+    String initialText;
+    TextArea text = new TextArea();
 
     @Override
     public void start(Stage primaryStage) throws Exception{
+        text.setEditable(false);
         VBox root = new VBox();
         HBox hbox = new HBox();
         VBox vbox = new VBox();
@@ -33,6 +38,7 @@ public class Main extends Application {
         Label[] lbls = new Label[26];
 
         for (int i = 0; i < 26; i++) {
+            key[i] = '*';
             elms[i] = new HBox();
             int width = (int) scene.getWidth()/60;
             elms[i].setPadding(new Insets(2, width, 2, width));
@@ -44,15 +50,24 @@ public class Main extends Application {
 
             final int x = i;
 
+            subs[i].textProperty().addListener(((observable, oldValue, newValue) -> {
+                key[x] = newValue.charAt(0);
+                text.setText(Substitution.substituted(initialText, key));
+            }));
+
             subs[i].lengthProperty().addListener(((observable, oldValue, newValue) -> {
                 if ((int) newValue > 1) {
                     subs[x].setText(subs[x].getText().substring(0, 1));
+                } else if ((int) newValue == 0) {
+                    subs[x].setText("*");
                 }
             }));
 
             elms[i].getChildren().addAll(lbls[i], subs[i]);
             grid.add(elms[i], i%7, i/7);
         }
+
+        text.setText(initialText);
 
         scene.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -75,11 +90,20 @@ public class Main extends Application {
         });
         vbox.getChildren().addAll(regions[0], grid, regions[1]);
         hbox.getChildren().addAll(vbox);
-        TextArea text = new TextArea();
         root.setMargin(text, new Insets(10));
         root.setMargin(hbox, new Insets(7, 3, 3, 3));
         VBox.setVgrow(text, Priority.ALWAYS);
-        root.getChildren().addAll(hbox, text);
+        Button button = new Button("Enter encrypted text");
+
+        button.setOnMouseClicked(event -> {
+            try {
+                enterText(new Stage());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        root.getChildren().addAll(hbox, button, text);
 
         text.widthProperty().addListener((observable, oldValue, newValue) -> text.setFont(new Font("Arial", fontSize(text, scale))));
 
@@ -110,6 +134,28 @@ public class Main extends Application {
 
         text.setFont(new Font("Arial", fontSize(text, scale)));
     }
+
+    void enterText(Stage stage) throws Exception {
+        VBox root = new VBox();
+        TextArea text = new TextArea();
+        Button ok = new Button("OK");
+        root.getChildren().addAll(text, ok);
+        //TODO: make proper UI
+        ok.setOnMouseClicked(event -> {
+            initialText = text.getText();
+            stage.close();
+            updateText();
+        });
+        Scene scene = new Scene(root, 200, 200);
+        stage.setTitle("Hello World");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    void updateText() {
+        text.setText(initialText);
+    }
+
 
     int fontSize(TextArea text, int scale) {
         return (int) (Math.pow(text.getWidth(), 0.6) * Math.pow(text.getHeight(), 0.3) / 10 * Math.pow(1.002, scale));
