@@ -1,21 +1,24 @@
 package sample;
 
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class Main extends Application {
     int scale;
-    boolean ctrlPressed = false;
     char[] key = new char[26];
     String initialText;
     TextArea text = new TextArea();
+    boolean retainEntries;
+    TextField[] subs = new TextField[26];
+    int currentChar;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -31,10 +34,8 @@ public class Main extends Application {
             regions[i].setMinWidth(scene.getWidth()/8);
         }
         GridPane grid = new GridPane();
-        TextField[] subs = new TextField[26];
         HBox[] elms = new HBox[26];
         Label[] lbls = new Label[26];
-
         for (int i = 0; i < 26; i++) {
             key[i] = '*';
             elms[i] = new HBox();
@@ -50,6 +51,19 @@ public class Main extends Application {
 
             subs[i].textProperty().addListener(((observable, oldValue, newValue) -> {
                 key[x] = newValue.charAt(0);
+                if (!Substitution.keyValid(key)) {
+                    try {
+                        if (x == Substitution.firstChar) {
+                            currentChar = x;
+                            keyIsNotValid(new Stage(), (char) (Substitution.firstChar + 97), (char) (Substitution.secondChar + 97), key[x]);
+                        } else {
+                            currentChar = x;
+                            keyIsNotValid(new Stage(), (char) (Substitution.secondChar + 97), (char) (Substitution.firstChar + 97), key[x]);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 text.setText(Substitution.substituted(initialText, key));
             }));
 
@@ -67,24 +81,21 @@ public class Main extends Application {
 
         text.setText(initialText);
 
-        scene.widthProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                for (int i = 0; i < 26; i++) {
-                    lbls[i].setMinWidth(scene.getWidth() / 19);
-                    int width = (int) scene.getWidth()/60;
-                    elms[i].setPadding(new Insets(2, width, 2, width));
-                    lbls[i].setMinWidth(scene.getWidth() / 19);
-                    lbls[i].setFont(new Font("Arial", scene.getWidth()/28));
-                    subs[i].setFont(new Font("Arial", scene.getWidth()/40));
-                }
-
-                for (int i = 0; i < 2; i++) {
-                    regions[i] = new Region();
-                    regions[i].setMinWidth(scene.getWidth()/8);
-                }
-
+        scene.widthProperty().addListener((observable, oldValue, newValue) -> {
+            for (int i = 0; i < 26; i++) {
+                lbls[i].setMinWidth(scene.getWidth() / 19);
+                int width = (int) scene.getWidth()/60;
+                elms[i].setPadding(new Insets(2, width, 2, width));
+                lbls[i].setMinWidth(scene.getWidth() / 19);
+                lbls[i].setFont(new Font("Arial", scene.getWidth()/28));
+                subs[i].setFont(new Font("Arial", scene.getWidth()/40));
             }
+
+            for (int i = 0; i < 2; i++) {
+                regions[i] = new Region();
+                regions[i].setMinWidth(scene.getWidth()/8);
+            }
+
         });
         vbox.getChildren().addAll(regions[0], grid, regions[1]);
         hbox.getChildren().addAll(vbox);
@@ -105,23 +116,16 @@ public class Main extends Application {
 
         text.widthProperty().addListener((observable, oldValue, newValue) -> text.setFont(new Font("Arial", fontSize(text, scale))));
 
-        text.widthProperty().addListener((observable, oldValue, newValue) -> text.setFont(new Font("Arial", fontSize(text, scale))));
+        text.heightProperty().addListener((observable, oldValue, newValue) -> text.setFont(new Font("Arial", fontSize(text, scale))));
 
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode().toString().equals("CONTROL")) {
-                ctrlPressed = true;
-            }
-        });
+        KeyCombination combination1 = new KeyCodeCombination(KeyCode.ADD, KeyCombination.CONTROL_DOWN);
+        KeyCombination combination2 = new KeyCodeCombination(KeyCode.SUBTRACT, KeyCombination.CONTROL_DOWN);
 
-        scene.setOnKeyReleased(event -> {
-            if (event.getCode().toString().equals("CONTROL")) {
-                ctrlPressed = false;
-            }
-        });
-
-        text.setOnScroll(event -> {
-            if (ctrlPressed) {
-                scale += event.getDeltaY();
+        text.setOnKeyPressed(event -> {
+            if (combination1.match(event)) {
+                scale += 40;
+            } else if (combination2.match(event)) {
+                scale -= 40;
             }
             text.setFont(new Font("Arial", fontSize(text, scale)));
         });
@@ -131,6 +135,67 @@ public class Main extends Application {
         primaryStage.show();
 
         text.setFont(new Font("Arial", fontSize(text, scale)));
+    }
+
+    private void keyIsNotValid(Stage stage, char first, char second, char third) throws Exception {
+        //TODO: improve design
+        VBox root = new VBox();
+        HBox hbox = new HBox();
+        Button yes = new Button("Yes");
+        Button no = new Button("No");
+
+        yes.setOnMouseClicked(event -> {
+            retainEntries = true;
+            stage.close();
+            updateKey();
+        });
+
+        no.setOnMouseClicked(event -> {
+            retainEntries = false;
+            stage.close();
+            updateKey();
+        });
+
+        stage.setOnCloseRequest(event -> {
+            retainEntries = false;
+            stage.close();
+            updateKey();
+        });
+
+        hbox.getChildren().addAll(yes, no);
+        Scene scene = new Scene(root, 250, 300);
+        Label label1 = new Label("Your input: " + first + " -> " + third);
+        Label label2 = new Label("clashes with the input " + second + " -> " + third);
+        Label label3 = new Label("Do you still wish to retain your entries?");
+        Label label4 = new Label("If YES, your inputs will be adopted and the");
+        Label label5 = new Label("conflicting field will be set to indeterminate");
+        Label label6 = new Label("If NO, your input will be ignored and the field");
+        Label label7 = new Label("will be reset to its last valid value.");
+        root.getChildren().addAll(label1, label2, label3, label4, label5, label6, label7, hbox);
+        stage.setResizable(false);
+        stage.setTitle("Conflict");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private void updateKey() {
+        if (retainEntries) {
+            if (currentChar == Substitution.firstChar) {
+                key[Substitution.secondChar] = '*';
+                subs[Substitution.secondChar].setText("*");
+            } else {
+                key[Substitution.firstChar] = '*';
+                subs[Substitution.firstChar].setText("*");
+            }
+        } else {
+            if (currentChar == Substitution.firstChar) {
+                key[Substitution.firstChar] = '*';
+                subs[Substitution.firstChar].setText("*");
+            } else {
+                key[Substitution.secondChar] = '*';
+                subs[Substitution.secondChar].setText("*");
+            }
+        }
     }
 
     void enterText(Stage stage) throws Exception {
