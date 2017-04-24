@@ -9,7 +9,6 @@ public class Substitution {
 
     static String substituted(String text, char[] key) {
         if (text.equals("")) {
-            System.out.println("Test0");
             return "";
         }
         char[] textArr = text.toCharArray();

@@ -11,6 +11,8 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+
 public class Main extends Application {
     int scale;
     char[] key = new char[26];
@@ -19,38 +21,45 @@ public class Main extends Application {
     boolean retainEntries;
     TextField[] subs = new TextField[26];
     int currentChar;
+    ArrayList<char[]> history = new ArrayList<>();
+    int historyPos = 0;
+    boolean automaticInsert = false;
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         text.setEditable(false);
         text.setWrapText(true);
         VBox root = new VBox();
         HBox hbox = new HBox();
         VBox vbox = new VBox();
-        Scene scene = new Scene(root, 400, 300);
+        Scene scene = new Scene(root, 500, 400);
         Region[] regions = new Region[2];
         for (int i = 0; i < 2; i++) {
             regions[i] = new Region();
-            regions[i].setMinWidth(scene.getWidth()/8);
+            regions[i].setMinWidth(scene.getWidth() / 8);
         }
         GridPane grid = new GridPane();
         HBox[] elms = new HBox[26];
         Label[] lbls = new Label[26];
         for (int i = 0; i < 26; i++) {
             key[i] = '*';
+        }
+        saveKeyToHistory();
+        for (int i = 0; i < 26; i++) {
             elms[i] = new HBox();
-            int width = (int) scene.getWidth()/60;
+            int width = (int) scene.getWidth() / 60;
             elms[i].setPadding(new Insets(2, width, 2, width));
             subs[i] = new TextField("*");
             lbls[i] = new Label(String.valueOf((char) (i + 97)) + ":");
             lbls[i].setMinWidth(scene.getWidth() / 19);
-            lbls[i].setFont(new Font("Arial", scene.getWidth()/28));
-            subs[i].setFont(new Font("Arial", scene.getWidth()/40));
+            lbls[i].setFont(new Font("Arial", scene.getWidth() / 28));
+            subs[i].setFont(new Font("Arial", scene.getWidth() / 40));
 
             final int x = i;
 
             subs[i].textProperty().addListener(((observable, oldValue, newValue) -> {
                 key[x] = newValue.charAt(0);
+                if (!automaticInsert) saveKeyToHistory();
                 if (!Substitution.keyValid(key)) {
                     try {
                         if (x == Substitution.firstChar) {
@@ -64,7 +73,9 @@ public class Main extends Application {
                         e.printStackTrace();
                     }
                 }
-                text.setText(Substitution.substituted(initialText, key));
+                if (initialText != null) {
+                    text.setText(Substitution.substituted(initialText, key));
+                }
             }));
 
             subs[i].lengthProperty().addListener(((observable, oldValue, newValue) -> {
@@ -76,24 +87,34 @@ public class Main extends Application {
             }));
 
             elms[i].getChildren().addAll(lbls[i], subs[i]);
-            grid.add(elms[i], i%7, i/7);
+            grid.add(elms[i], i % 7, i / 7);
         }
+
+        Button undo = new Button("Undo");
+        Button redo = new Button("Redo");
+
+        grid.add(undo, 5, 3);
+        grid.add(redo, 6, 3);
+
+        undo.setOnMouseClicked(event -> undo());
+
+        redo.setOnMouseClicked(event -> redo());
 
         text.setText(initialText);
 
         scene.widthProperty().addListener((observable, oldValue, newValue) -> {
             for (int i = 0; i < 26; i++) {
                 lbls[i].setMinWidth(scene.getWidth() / 19);
-                int width = (int) scene.getWidth()/60;
+                int width = (int) scene.getWidth() / 60;
                 elms[i].setPadding(new Insets(2, width, 2, width));
                 lbls[i].setMinWidth(scene.getWidth() / 19);
-                lbls[i].setFont(new Font("Arial", scene.getWidth()/28));
-                subs[i].setFont(new Font("Arial", scene.getWidth()/40));
+                lbls[i].setFont(new Font("Arial", scene.getWidth() / 28));
+                subs[i].setFont(new Font("Arial", scene.getWidth() / 40));
             }
 
             for (int i = 0; i < 2; i++) {
                 regions[i] = new Region();
-                regions[i].setMinWidth(scene.getWidth()/8);
+                regions[i].setMinWidth(scene.getWidth() / 8);
             }
 
         });
@@ -135,6 +156,73 @@ public class Main extends Application {
         primaryStage.show();
 
         text.setFont(new Font("Arial", fontSize(text, scale)));
+    }
+
+    private void saveKeyToHistory() {
+        System.out.println("----------------------");
+        for (int i = 0; i < history.size(); i++) {
+            for (int j = 0; j < history.get(i).length; j++) {
+                System.out.print(history.get(i)[j]);
+            }
+            System.out.println();
+        }
+        if (historyPos != history.size()-1) {
+            for (int i = history.size()-1; i > historyPos; i--) {
+                history.remove(i);
+                System.out.println(i);
+            }
+        }
+        System.out.println("pos: " + historyPos);
+        char[] tempKey = new char[key.length];
+        for (int i = 0; i < tempKey.length; i++) {
+            tempKey[i] = key[i];
+        }
+        if (history.size() != 0) historyPos++;
+        history.add(tempKey);
+        for (int i = 0; i < history.size(); i++) {
+            for (int j = 0; j < history.get(i).length; j++) {
+                System.out.print(history.get(i)[j]);
+            }
+            System.out.println();
+        }
+    }
+
+    private void undo() {
+        System.out.println("undo");
+        if (historyPos > 0 && history.size() > 0) {
+            historyPos--;
+            updateKeyInputs();
+        }
+        System.out.println(historyPos);
+        for (int i = 0; i < history.size(); i++) {
+            for (int j = 0; j < history.get(i).length; j++) {
+                System.out.print(history.get(i)[j]);
+            }
+            System.out.println();
+        }
+    }
+
+    private void redo() {
+        System.out.println("redo");
+        if (historyPos < history.size()-1) {
+            historyPos++;
+            updateKeyInputs();
+        }
+        System.out.println(historyPos);
+        for (int i = 0; i < history.size(); i++) {
+            for (int j = 0; j < history.get(i).length; j++) {
+                System.out.print(history.get(i)[j]);
+            }
+            System.out.println();
+        }
+    }
+
+    private void updateKeyInputs() {
+        automaticInsert = true;
+        for (int i = 0; i < 26; i++) {
+            subs[i].setText(String.valueOf(history.get(historyPos)[i]));
+        }
+        automaticInsert = false;
     }
 
     private void keyIsNotValid(Stage stage, char first, char second, char third) throws Exception {
