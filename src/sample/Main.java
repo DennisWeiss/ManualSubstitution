@@ -2,6 +2,7 @@ package sample;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
@@ -33,6 +34,7 @@ public class Main extends Application {
         HBox hbox = new HBox();
         VBox vbox = new VBox();
         Scene scene = new Scene(root, 500, 400);
+        Button button = new Button("Enter encrypted text");
         Region[] regions = new Region[2];
         for (int i = 0; i < 2; i++) {
             regions[i] = new Region();
@@ -59,7 +61,6 @@ public class Main extends Application {
 
             subs[i].textProperty().addListener(((observable, oldValue, newValue) -> {
                 key[x] = newValue.charAt(0);
-                if (!automaticInsert) saveKeyToHistory();
                 if (!Substitution.keyValid(key)) {
                     try {
                         if (x == Substitution.firstChar) {
@@ -72,6 +73,8 @@ public class Main extends Application {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                } else {
+                    if (!automaticInsert) saveKeyToHistory();
                 }
                 if (initialText != null) {
                     text.setText(Substitution.substituted(initialText, key));
@@ -90,8 +93,14 @@ public class Main extends Application {
             grid.add(elms[i], i % 7, i / 7);
         }
 
-        Button undo = new Button("Undo");
-        Button redo = new Button("Redo");
+        Button undo = new Button("<--");
+        Button redo = new Button("-->");
+
+        undo.setAlignment(Pos.BASELINE_RIGHT);
+        redo.setAlignment(Pos.BASELINE_RIGHT);
+
+        undo.setFont(new Font("Arial", scene.getWidth() / 40));
+        redo.setFont(new Font("Arial", scene.getWidth() / 40));
 
         grid.add(undo, 5, 3);
         grid.add(redo, 6, 3);
@@ -109,6 +118,9 @@ public class Main extends Application {
                 elms[i].setPadding(new Insets(2, width, 2, width));
                 lbls[i].setMinWidth(scene.getWidth() / 19);
                 lbls[i].setFont(new Font("Arial", scene.getWidth() / 28));
+                button.setFont(new Font("Arial", scene.getWidth() / 28));
+                undo.setFont(new Font("Arial", scene.getWidth() / 40));
+                redo.setFont(new Font("Arial", scene.getWidth() / 40));
                 subs[i].setFont(new Font("Arial", scene.getWidth() / 40));
             }
 
@@ -123,7 +135,11 @@ public class Main extends Application {
         root.setMargin(text, new Insets(10));
         root.setMargin(hbox, new Insets(7, 3, 3, 3));
         VBox.setVgrow(text, Priority.ALWAYS);
-        Button button = new Button("Enter encrypted text");
+        button.setFont(new Font("Arial", scene.getWidth() / 28));
+        Region space = new Region();
+        space.setPrefWidth(10);
+        HBox hBox2 = new HBox();
+        hBox2.getChildren().addAll(space, button);
 
         button.setOnMouseClicked(event -> {
             try {
@@ -133,7 +149,7 @@ public class Main extends Application {
             }
         });
 
-        root.getChildren().addAll(hbox, button, text);
+        root.getChildren().addAll(hbox, hBox2, text);
 
         text.widthProperty().addListener((observable, oldValue, newValue) -> text.setFont(new Font("Arial", fontSize(text, scale))));
 
