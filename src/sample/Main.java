@@ -175,32 +175,17 @@ public class Main extends Application {
     }
 
     private void saveKeyToHistory() {
-        System.out.println("----------------------");
-        for (int i = 0; i < history.size(); i++) {
-            for (int j = 0; j < history.get(i).length; j++) {
-                System.out.print(history.get(i)[j]);
-            }
-            System.out.println();
-        }
         if (historyPos != history.size()-1) {
             for (int i = history.size()-1; i > historyPos; i--) {
                 history.remove(i);
-                System.out.println(i);
             }
         }
-        System.out.println("pos: " + historyPos);
         char[] tempKey = new char[key.length];
         for (int i = 0; i < tempKey.length; i++) {
             tempKey[i] = key[i];
         }
         if (history.size() != 0) historyPos++;
         history.add(tempKey);
-        for (int i = 0; i < history.size(); i++) {
-            for (int j = 0; j < history.get(i).length; j++) {
-                System.out.print(history.get(i)[j]);
-            }
-            System.out.println();
-        }
     }
 
     private void undo() {
@@ -209,13 +194,6 @@ public class Main extends Application {
             historyPos--;
             updateKeyInputs();
         }
-        System.out.println(historyPos);
-        for (int i = 0; i < history.size(); i++) {
-            for (int j = 0; j < history.get(i).length; j++) {
-                System.out.print(history.get(i)[j]);
-            }
-            System.out.println();
-        }
     }
 
     private void redo() {
@@ -223,13 +201,6 @@ public class Main extends Application {
         if (historyPos < history.size()-1) {
             historyPos++;
             updateKeyInputs();
-        }
-        System.out.println(historyPos);
-        for (int i = 0; i < history.size(); i++) {
-            for (int j = 0; j < history.get(i).length; j++) {
-                System.out.print(history.get(i)[j]);
-            }
-            System.out.println();
         }
     }
 
