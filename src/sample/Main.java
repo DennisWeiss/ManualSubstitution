@@ -54,8 +54,8 @@ public class Main extends Application {
             subs[i] = new TextField("*");
             lbls[i] = new Label(String.valueOf((char) (i + 97)) + ":");
             lbls[i].setMinWidth(scene.getWidth() / 19);
-            lbls[i].setFont(new Font("Arial", scene.getWidth() / 28));
-            subs[i].setFont(new Font("Arial", scene.getWidth() / 40));
+            lbls[i].setFont(new Font("Arial", scene.getWidth() / 35));
+            subs[i].setFont(new Font("Arial", scene.getWidth() / 50));
 
             final int x = i;
 
@@ -99,8 +99,8 @@ public class Main extends Application {
         undo.setAlignment(Pos.BASELINE_RIGHT);
         redo.setAlignment(Pos.BASELINE_RIGHT);
 
-        undo.setFont(new Font("Arial", scene.getWidth() / 40));
-        redo.setFont(new Font("Arial", scene.getWidth() / 40));
+        undo.setFont(new Font("Arial", scene.getWidth() / 50));
+        redo.setFont(new Font("Arial", scene.getWidth() / 50));
 
         grid.add(undo, 5, 3);
         grid.add(redo, 6, 3);
@@ -117,11 +117,11 @@ public class Main extends Application {
                 int width = (int) scene.getWidth() / 60;
                 elms[i].setPadding(new Insets(2, width, 2, width));
                 lbls[i].setMinWidth(scene.getWidth() / 19);
-                lbls[i].setFont(new Font("Arial", scene.getWidth() / 28));
-                button.setFont(new Font("Arial", scene.getWidth() / 28));
-                undo.setFont(new Font("Arial", scene.getWidth() / 40));
-                redo.setFont(new Font("Arial", scene.getWidth() / 40));
-                subs[i].setFont(new Font("Arial", scene.getWidth() / 40));
+                lbls[i].setFont(new Font("Arial", scene.getWidth() / 35));
+                button.setFont(new Font("Arial", scene.getWidth() / 35));
+                undo.setFont(new Font("Arial", scene.getWidth() / 50));
+                redo.setFont(new Font("Arial", scene.getWidth() / 50));
+                subs[i].setFont(new Font("Arial", scene.getWidth() / 50));
             }
 
             for (int i = 0; i < 2; i++) {
@@ -135,7 +135,7 @@ public class Main extends Application {
         root.setMargin(text, new Insets(10));
         root.setMargin(hbox, new Insets(7, 3, 3, 3));
         VBox.setVgrow(text, Priority.ALWAYS);
-        button.setFont(new Font("Arial", scene.getWidth() / 28));
+        button.setFont(new Font("Arial", scene.getWidth() / 35));
         Region space = new Region();
         space.setPrefWidth(10);
         HBox hBox2 = new HBox();
@@ -167,7 +167,7 @@ public class Main extends Application {
             text.setFont(new Font("Arial", fontSize(text, scale)));
         });
 
-        primaryStage.setTitle("Hello World");
+        primaryStage.setTitle("Manual Substitution");
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -213,11 +213,17 @@ public class Main extends Application {
     }
 
     private void keyIsNotValid(Stage stage, char first, char second, char third) throws Exception {
-        //TODO: improve design
         VBox root = new VBox();
         HBox hbox = new HBox();
+        Region region1 = new Region();
+        Region region2 = new Region();
         Button yes = new Button("Yes");
         Button no = new Button("No");
+        yes.setFont(new Font("Arial", 15));
+        no.setFont(new Font("Arial", 15));
+
+        region1.setPrefWidth(70);
+        region2.setPrefWidth(30);
 
         yes.setOnMouseClicked(event -> {
             retainEntries = true;
@@ -237,16 +243,29 @@ public class Main extends Application {
             updateKey();
         });
 
-        hbox.getChildren().addAll(yes, no);
-        Scene scene = new Scene(root, 250, 300);
-        Label label1 = new Label("Your input: " + first + " -> " + third);
-        Label label2 = new Label("clashes with the input " + second + " -> " + third);
-        Label label3 = new Label("Do you still wish to retain your entries?");
-        Label label4 = new Label("If YES, your inputs will be adopted and the");
-        Label label5 = new Label("conflicting field will be set to indeterminate");
-        Label label6 = new Label("If NO, your input will be ignored and the field");
-        Label label7 = new Label("will be reset to its last valid value.");
-        root.getChildren().addAll(label1, label2, label3, label4, label5, label6, label7, hbox);
+        hbox.getChildren().addAll(region1, yes, region2, no);
+        Scene scene = new Scene(root, 250, 280);
+        Label[] label = new Label[7];
+        label[0] = new Label("Your input: " + first + " -> " + third);
+        label[1] = new Label("clashes with the input " + second + " -> " + third);
+        label[2] = new Label("Do you still wish to retain your entries?");
+        label[3] = new Label("If YES, your inputs will be adopted and the");
+        label[4] = new Label("conflicting field will be set to indeterminate");
+        label[5] = new Label("If NO, your input will be ignored and the field");
+        label[6] = new Label("will be reset to its last valid value.");
+        for (int i = 0; i < label.length; i++) {
+            label[i].setFont(new Font("Arial", 12));
+            root.getChildren().add(label[i]);
+            if (i == 0 || i == 2 || i == 3 || i == 5) {
+                label[i].setPadding(new Insets(15, 10, 0, 10));
+            } else if (i == 6){
+                label[i].setPadding(new Insets(5, 10, 25, 10));
+            } else {
+                label[i].setPadding(new Insets(5, 10, 0, 10));
+            }
+
+        }
+        root.getChildren().add(hbox);
         stage.setResizable(false);
         stage.setTitle("Conflict");
         stage.setScene(scene);
@@ -275,17 +294,27 @@ public class Main extends Application {
 
     void enterText(Stage stage) throws Exception {
         VBox root = new VBox();
+        HBox hBox = new HBox();
         TextArea text = new TextArea();
+        text.setWrapText(true);
+        root.setMargin(text, new Insets(7));
         Button ok = new Button("OK");
-        root.getChildren().addAll(text, ok);
-        //TODO: make proper UI
+        Region region1 = new Region();
+        Region region2 = new Region();
+        HBox.setHgrow(region1, Priority.ALWAYS);
+        HBox.setHgrow(region2, Priority.ALWAYS);
+        ok.setFont(new Font("Arial", 17));
+        hBox.setPadding(new Insets(10));
+        hBox.getChildren().addAll(region1, ok, region2);
+        root.getChildren().addAll(text, hBox);
+        VBox.setVgrow(text, Priority.ALWAYS);
         ok.setOnMouseClicked(event -> {
             initialText = text.getText();
             stage.close();
             updateText();
         });
-        Scene scene = new Scene(root, 200, 200);
-        stage.setTitle("Hello World");
+        Scene scene = new Scene(root, 400, 300);
+        stage.setTitle("Enter encrypted text");
         stage.setScene(scene);
         stage.show();
     }
