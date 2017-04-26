@@ -309,7 +309,7 @@ public class Main extends Application {
         root.getChildren().addAll(text, hBox);
         VBox.setVgrow(text, Priority.ALWAYS);
         ok.setOnMouseClicked(event -> {
-            initialText = text.getText();
+            initialText = text.getText().toLowerCase();
             stage.close();
             updateText();
         });
@@ -320,7 +320,7 @@ public class Main extends Application {
     }
 
     void updateText() {
-        text.setText(initialText);
+        text.setText(Substitution.substituted(initialText, key));
     }
 
 
